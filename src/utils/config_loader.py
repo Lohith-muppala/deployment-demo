@@ -23,5 +23,3 @@ def load_config(filepath):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
     pass
-
-print(load_config("C:\\Users\\mlohi\\Documents\\GitHub\\deployment-demo\\config\\dev.yml"))

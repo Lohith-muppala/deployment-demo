@@ -40,8 +40,6 @@ class LR_Model:
             X = quad.fit_transform(X)
             return X
 
-        
-    
     def predict(self,data):
         assert self.model != None, 'Model empty or not fitted!'
         Y_test_pred = self.model.predict(data)
