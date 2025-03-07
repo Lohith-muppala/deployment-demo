@@ -1,6 +1,11 @@
 import boto3
 import os
 import base64
+
+import sys, os
+sys.path.append(os.path.abspath("src"))
+sys.path.append('src') 
+
 from src.utils.model_utils import get_latest_object_from_s3
 def load_boto3_from_github_secrets(profile_name="default"):
     """
