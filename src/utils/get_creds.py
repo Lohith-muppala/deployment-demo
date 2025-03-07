@@ -1,8 +1,8 @@
 import boto3
 import os
 import base64
-
-def load_boto3_from_github_secrets(access_key_secret_name, secret_key_secret_name, region_secret_name, profile_name="github_secrets_profile"):
+from src.utils.model_utils import get_latest_object_from_s3
+def load_boto3_from_github_secrets(profile_name="default"):
     """
     Configures a Boto3 session using AWS credentials stored as GitHub secrets.
 
@@ -18,20 +18,16 @@ def load_boto3_from_github_secrets(access_key_secret_name, secret_key_secret_nam
 
     try:
         # Retrieve secrets from environment variables (GitHub Actions)
-        access_key_id = os.environ.get(access_key_secret_name)
-        secret_access_key = os.environ.get(secret_key_secret_name)
-        region = os.environ.get(region_secret_name)
-
-        if not access_key_id or not secret_access_key or not region:
-            raise ValueError("One or more AWS credential secrets are missing from the environment.")
+        # access_key_id = os.environ.get('aws_access_key_id')
+        # secret_access_key = os.environ.get('aws_secret_access_key')
+        # region = os.environ.get('aws_region')
+        
+        # if not access_key_id or not secret_access_key or not region:
+        #     raise ValueError("One or more AWS credential secrets are missing from the environment.")
 
         # Create a Boto3 session using the retrieved credentials
-        session = boto3.Session(
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key,
-            region_name=region,
-            profile_name=profile_name,
-        )
+        session = boto3.Session(profile_name=profile_name)
+        print(get_latest_object_from_s3(session=session,bucket_name='mlr-deployment-bucket', s3_prefix='test'))
 
         print("Boto3 session configured successfully from GitHub secrets.")
         return session
@@ -39,3 +35,5 @@ def load_boto3_from_github_secrets(access_key_secret_name, secret_key_secret_nam
     except Exception as e:
         print(f"Error configuring Boto3 session: {e}")
         return None
+    
+print(load_boto3_from_github_secrets())
