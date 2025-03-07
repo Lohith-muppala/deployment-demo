@@ -1,8 +1,11 @@
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import r2_score,mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
+
+import sys, os
+sys.path.append(os.path.abspath("src"))
+sys.path.append(os.path.abspath("."))
 from src.data_engineering.etl import transform
 
 class LR_Model:
@@ -22,23 +25,6 @@ class LR_Model:
         model = LinearRegression().fit(X,y)
         self.model = model
         return model
-
-    def transform_features(self,data,mode = 'train'):
-        if mode == 'train':
-            self.mode = 'train'
-            data = transform(data)
-            self.data = data
-            quad = PolynomialFeatures (degree = 2)
-            X = data.drop(['charges','region'], axis = 1)
-            y = data.charges
-            X = quad.fit_transform(X)
-            return X,y
-        
-        else:
-            self.mode = 'inference'
-            quad = PolynomialFeatures(degree=2)
-            X = quad.fit_transform(X)
-            return X
 
     def predict(self,data):
         assert self.model != None, 'Model empty or not fitted!'

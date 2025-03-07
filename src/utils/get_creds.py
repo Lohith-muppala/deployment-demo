@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath("src"))
 
 from utils.model_utils import get_latest_object_from_s3
 
-def load_credentials(profile_name="default",local=False):
+def load_session(profile_name="default",local=False):
     """
     Configures a Boto3 session using AWS credentials stored as GitHub secrets.
 
