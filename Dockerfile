@@ -1,26 +1,16 @@
-
 FROM python:3.9-slim
 
-
 ARG TRAINING=True
+WORKDIR /app
 
-ENV APP_HOME /app
-WORKDIR $APP_HOME
-
-# Copy requirements file
-COPY requirements.txt .
+COPY . /app
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
-COPY . .
+WORKDIR /app/src
 
-# Conditionally install packages based on the environment
-RUN if [ "$TRAINING" = "True" ]; then \
-    CMD ["python", "train.py"] \
-    else \
-    CMD ["python", "predict.py"] \
-    exit 1; \
-    fi
-
+# Use CMD to specify the startup command based on the TRAINING argument
+CMD ["python", "train.py"]
+#overriding CMD if training is false.
+RUN if [ "$TRAINING" = "False" ]; then echo "Overriding CMD for prediction"; CMD ["python", "predict.py"]; fi
