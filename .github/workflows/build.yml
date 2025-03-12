@@ -9,56 +9,101 @@ on:
 
 jobs:
   build:
-    name: Emulate build step
+    name: Build container
     runs-on: ubuntu-latest
 
-    steps:
-    - name: Checking out repository
-      uses: actions/checkout@v3
-
-  deploy:
-    needs: build
-    name: Assume role
-    runs-on: ubuntu-latest
-    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     permissions:
       id-token: write
       contents: read
 
     steps:
-    - name: Checking out repository
-      uses: actions/checkout@v3
-    
-    - name: Configure AWS credentials from Test account
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-region: us-east-1
-        role-to-assume: ${{ secrets.AWS_ROLE_FOR_GITHUB }}
-        role-session-name: GitHubActions
-
-    - name: Login to Amazon ECR
-      id: login-aws-ecr
-      uses: aws-actions/amazon-ecr-login@v1
-
-
-    - name: Get commit branch
-      id: get-commit-branch
-      run: echo "::set-output name=commit-branch::${{github.event.pull_request.head.ref}}"
-
-    - name: Get timestamp
-      id: get-timestamp
-      run: echo "::set-output name=timestamp::$(date +'%Y-%m-%d-%H-%M')"
-    
-    - name: Print current directory
-      working-directory: .
-      run: pwd
+      - name: Checking out repository
+        uses: actions/checkout@v3
       
-    - name: Build and push the tagged docker image to Amazon ECR
-      env:
-        ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
-        ECR_REPOSITORY: deployment
-        IMAGE_TAG: ${{ steps.get-commit-branch.outputs.commit-branch }}-${{ steps.get-timestamp.outputs.timestamp }}
-      run: |
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_FOR_GITHUB }}
+          role-session-name: GitHubActions
+
+
+  deploy:
+    needs: build
+    name: Deploy container to ECS
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checking out repository
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_FOR_GITHUB }}
+          role-session-name: GitHubActions
+      
+      - name: Login to Amazon ECR
+        id: login-aws-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Get commit branch
+        id: get-commit-branch
+        run: echo "::set-output name=commit-branch::${{github.event.pull_request.head.ref}}"
+
+      - name: Get timestamp
+        id: get-timestamp
+        run: echo "::set-output name=timestamp::$(date +'%Y-%m-%d-%H-%M')"
+      
+      - name: Print current directory
+        working-directory: .
+        run: pwd
+        
+      - name: Build and push the tagged docker image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
+          ECR_REPOSITORY: deployment
+          IMAGE_TAG: ${{ steps.get-commit-branch.outputs.commit-branch }}-${{ steps.get-timestamp.outputs.timestamp }}
+        run: |
           docker build --build-arg TRAINING=True -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-      working-directory: .
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+        working-directory: .
+      
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: src/deployment/task-definition.json
+          container-name: deployment-container
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy Amazon ECS task definition (Create if needed)
+        id: deploy-task
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: deployment-service
+          cluster: deployment-cluster
+          wait-for-service-stability: true
+        continue-on-error: true
+
+      - name: Create ECS Service if it doesn't exist
+        if: steps.deploy-task.outcome == 'failure'
+        run: |
+          aws ecs create-service \
+            --cluster deployment-cluster \
+            --service-name deployment-service \
+            --task-definition src/deployment/task-definition.json \
+            --desired-count 1 \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=['subnet-YOUR_SUBNET_ID'],securityGroups=['sg-YOUR_SECURITY_GROUP_ID'],assignPublicIp=ENABLED}" \
+            --platform-version LATEST
+        env:
+          AWS_REGION: us-east-1

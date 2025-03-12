@@ -1,6 +1,8 @@
 import sys,os
-sys.path.append(os.path.abspath("src"))
+sys.path.append(os.path.abspath("./app/src"))
+sys.path.append(os.path.abspath("/src"))
 sys.path.append(os.path.abspath("."))
+
 
 from src.data_engineering.transform import transform_features
 from src.modeling.LinearRegressor import LR_Model
@@ -13,7 +15,7 @@ from datetime import datetime
 
 def main():
     # Load your dataset (replace 'insurance.csv' with your actual file path)
-    data = pd.read_csv('data\insurance.csv')
+    data = pd.read_csv('./data/insurance.csv')
 
     # Create an instance of the LR_Model
     model = LR_Model(data)
@@ -34,7 +36,7 @@ def main():
     model.score(y_pred, y_test)
 
     #save model
-    session = load_session(local=True)
+    session = load_session(local=False)
     print('Saving model...')
     save_model_to_s3(model,bucket_name='mlr-deployment-bucket',s3_key=f'models/{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.joblib',boto_session=session)
     print(f'Saved model:models/{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}')

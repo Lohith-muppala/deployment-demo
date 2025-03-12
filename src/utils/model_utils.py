@@ -81,7 +81,7 @@ def load_model_from_s3(session, bucket_name, s3_key):
         obj = s3.get_object(Bucket=bucket_name, Key=f'{obj_name}')
         model_bytes = obj['Body'].read()
         model = joblib.load(io.BytesIO(model_bytes))
-        print(f"Model loaded from s3://{bucket_name}/{s3_key}")
+        print(f"Model loaded from s3://{bucket_name}/{obj_name}")
         return model
 
     except Exception as e:
