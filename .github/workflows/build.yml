@@ -76,11 +76,10 @@ jobs:
         role-session-name: GitHubActions
     
     - name: Fill in the new image ID in the Amazon ECS task definition
-      working-directory: src/deployment
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: task-definition.json # Replace with your task definition file
+        task-definition: src/deployment/task-definition.json # Replace with your task definition file
         container-name: deployment-container # Replace with your container name
         image: ${{ steps.build-image.outputs.image }}
 
