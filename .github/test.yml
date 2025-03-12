@@ -1,9 +1,11 @@
 name: test-aws-gha
+concurrency: 1
 
 on:
   workflow_dispatch:
+  
   push:
-    branches: [ dev ]
+    branches: [ main ]
 
 jobs:
   build:
