@@ -47,6 +47,7 @@ jobs:
       run: echo "::set-output name=timestamp::$(date +'%Y-%m-%d-%H-%M')"
     
     - name: Print current directory
+      working-directory: .
       run: pwd
       
     - name: Build and push the tagged docker image to Amazon ECR
