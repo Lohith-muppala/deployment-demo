@@ -53,5 +53,5 @@ jobs:
         ECR_REPOSITORY: deployment
         IMAGE_TAG: ${{ steps.get-commit-branch.outputs.commit-branch }}-${{ steps.get-timestamp.outputs.timestamp }}
       run: |
-          docker build --build-arg TRAINING=True -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build --build-arg TRAINING=True -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
