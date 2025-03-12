@@ -16,9 +16,6 @@ jobs:
       id-token: write
       contents: read
 
-    outputs: # Add outputs here
-      image: ${{ steps.build-image.outputs.image }}
-
     steps:
       - name: Checking out repository
         uses: actions/checkout@v3
@@ -30,6 +27,26 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_FOR_GITHUB }}
           role-session-name: GitHubActions
 
+
+  deploy:
+    needs: build
+    name: Deploy container to ECS
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checking out repository
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_FOR_GITHUB }}
+          role-session-name: GitHubActions
+      
       - name: Login to Amazon ECR
         id: login-aws-ecr
         uses: aws-actions/amazon-ecr-login@v1
@@ -56,29 +73,8 @@ jobs:
           docker build --build-arg TRAINING=True -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo ""image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
         working-directory: .
-
-  deploy:
-    needs: build # Add needs: build here
-    name: Deploy container to ECS
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Checking out repository
-        uses: actions/checkout@v3
-      
-      - name: Configure AWS credentials from Test account
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: us-east-1
-          role-to-assume: ${{ secrets.AWS_ROLE_FOR_GITHUB }}
-          role-session-name: GitHubActions
-      
-      - name: Debug - Print build job outputs
-        run: echo "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
       
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
@@ -86,7 +82,7 @@ jobs:
         with:
           task-definition: src/deployment/task-definition.json
           container-name: deployment-container
-          image: ${{ needs.build.outputs.image }} # Changed this line
+          image: ${{ steps.build-image.outputs.image }}
 
       - name: Deploy Amazon ECS task definition (Create if needed)
         id: deploy-task
