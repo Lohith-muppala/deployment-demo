@@ -14,13 +14,13 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code
-COPY . .
+COPY src /app/src
 
 # Conditionally install packages based on the environment
 RUN if [ "$TRAINING" = "True" ]; then \
-    CMD ["python", "train.py"] \
+    CMD ["python", "/app/src/train.py"] \
     else \
-    CMD ["python", "predict.py"] \
+    CMD ["python", "/app/src/predict.py"] \
     exit 1; \
     fi
 
