@@ -53,11 +53,15 @@ jobs:
 
       - name: Get commit branch
         id: get-commit-branch
-        run: echo "::set-output name=commit-branch::${{github.event.pull_request.head.ref}}"
+        run: |
+          echo "commit-branch = ${{github.event.pull_request.head.ref}}" >> $GITHUB_OUTPUT
+          echo "commit-branch = ${{github.event.pull_request.head.ref}}" >> $GITHUB_ENV
 
       - name: Get timestamp
         id: get-timestamp
-        run: echo "::set-output name=timestamp::$(date +'%Y-%m-%d-%H-%M')"
+        run: |
+          echo "timestamp = $(date +'%Y-%m-%d-%H-%M')"  >> $GITHUB_ENV
+          echo "timestamp = $(date +'%Y-%m-%d-%H-%M')"  >> $GITHUB_OUTPUT
       
       - name: Print current directory
         working-directory: .
