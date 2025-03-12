@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - name: Checking out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
   deploy:
     needs: build
@@ -26,6 +26,9 @@ jobs:
       contents: read
 
     steps:
+    - name: Checking out repository
+      uses: actions/checkout@v3
+    
     - name: Configure AWS credentials from Test account
       uses: aws-actions/configure-aws-credentials@v1
       with:
