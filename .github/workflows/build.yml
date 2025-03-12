@@ -9,18 +9,9 @@ on:
 
 jobs:
   build:
-    name: Emulate build step
+    name: Build container
     runs-on: ubuntu-latest
-
-    steps:
-    - name: Checking out repository
-      uses: actions/checkout@v3
-
-  deploy:
-    needs: build
-    name: Assume role
-    runs-on: ubuntu-latest
-    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    
     permissions:
       id-token: write
       contents: read
@@ -62,3 +53,57 @@ jobs:
           docker build --build-arg TRAINING=True -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
       working-directory: .
+
+
+  deploy:
+    needs: build
+    name: Deploy container to ECS
+    runs-on: ubuntu-latest
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+    - name: Checking out repository
+      uses: actions/checkout@v3
+    
+    - name: Configure AWS credentials from Test account
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-1
+        role-to-assume: ${{ secrets.AWS_ROLE_FOR_GITHUB }}
+        role-session-name: GitHubActions
+    
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      working-directory: src/deployment
+      with:
+        task-definition: task-definition.json # Replace with your task definition file
+        container-name: deployment-container # Replace with your container name
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy Amazon ECS task definition (Create if needed)
+      id: deploy-task
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: deployment-service # Replace with your ECS service name
+        cluster: deployment-cluster # Replace with your ECS cluster name
+        wait-for-service-stability: true
+      continue-on-error: true # Allow the step to continue if the service doesn't exist
+
+    - name: Create ECS Service if it doesn't exist
+      if: steps.deploy-task.outcome == 'failure'
+      run: |
+        aws ecs create-service \
+          --cluster deployment-cluster \
+          --service-name deployment-service \
+          --task-definition ${{ steps.task-def.outputs.task-definition }} \
+          --desired-count 1 \
+          --launch-type FARGATE \
+          --network-configuration "awsvpcConfiguration={subnets=['subnet-YOUR_SUBNET_ID'],securityGroups=['sg-YOUR_SECURITY_GROUP_ID'],assignPublicIp=ENABLED}" \
+          --platform-version LATEST
+      env:
+        AWS_REGION: us-east-1 # Replace with your region
