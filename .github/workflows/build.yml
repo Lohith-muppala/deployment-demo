@@ -77,6 +77,9 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_FOR_GITHUB }}
           role-session-name: GitHubActions
       
+      - name: Debug - Print build job outputs
+        run: echo "${{ toJSON(needs.build.outputs) }}"
+      
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
