@@ -26,7 +26,7 @@ def main():
     """
     try:
         # Load the model
-        session = load_session(local=True)
+        session = load_session(local=False)
         model = load_model_from_s3(session,bucket_name='mlr-deployment-bucket',s3_key='models')
         data = pd.read_csv('data\insurance.csv')
         # Create a dummy LR_Model instance to use its methods.

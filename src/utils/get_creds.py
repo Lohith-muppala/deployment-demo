@@ -26,17 +26,19 @@ def load_session(profile_name="default",local=False):
             access_key_id = os.environ.get('aws_access_key_id')
             secret_access_key = os.environ.get('aws_secret_access_key')
             region = os.environ.get('aws_region')
+
+            print(access_key_id)
             
             if not access_key_id or not secret_access_key or not region:
                 raise ValueError("One or more AWS credential secrets are missing from the environment.")
 
             # Create a Boto3 session using the retrieved credentials
-            session = boto3.Session(profile_name=profile_name)
+            session = boto3.Session(aws_access_key_id=access_key_id,aws_secret_access_key=secret_access_key)
             print("Boto3 session configured successfully from GitHub secrets.")
             return session
 
         except Exception as e:
-            print(f"Error configuring Boto3 session: {e}")
+            print(f"Error configuring Boto3 session with key and secret: {e}")
             return None
     else:
         try:
