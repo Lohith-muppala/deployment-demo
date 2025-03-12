@@ -36,9 +36,10 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
 
-    - name: Get commit hash
-      id: get-commit-hash
-      run: echo "::set-output name=commit-hash::$(git rev-parse --short HEAD)"
+    - name: Get commit branch
+      id: get-commit-branch
+      run: echo "::set-output name=commit-branch::${{github.event.pull_request.head.ref}}"
+
     - name: Get timestamp
       id: get-timestamp
       run: echo "::set-output name=timestamp::$(date +'%Y-%m-%d-%H-%M')"
@@ -48,7 +49,7 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
         ECR_REPOSITORY: deployment
-        IMAGE_TAG: ${{ steps.get-commit-hash.outputs.commit-hash }}-${{ steps.get-timestamp.outputs.timestamp }}
+        IMAGE_TAG: ${{ steps.get-commit-branch.outputs.commit-branch }}-${{ steps.get-timestamp.outputs.timestamp }}
       run: |
           docker build --build-arg TRAINING=True -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
