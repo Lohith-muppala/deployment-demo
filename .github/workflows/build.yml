@@ -69,6 +69,9 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
           ECR_REPOSITORY: deployment
           IMAGE_TAG: ${{ steps.get-commit-branch.outputs.commit-branch }}-${{ steps.get-timestamp.outputs.timestamp }}
+          aws_secret_access_key : ${{ secrets.SECRET_KEY_SECRET_NAME }}
+          aws_access_key_id : ${{ secrets.ACCESS_KEY_SECRET_NAME }}
+          
         run: |
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
           docker build --build-arg TRAINING=True -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./Dockerfile .
