@@ -21,25 +21,36 @@ def load_session(profile_name="default",local=False):
         boto3.Session: A configured Boto3 session.
     """
     if not local:
-        try:
-            # Retrieve secrets from environment variables (GitHub Actions)
-            access_key_id = os.environ.get('aws_access_key_id')
-            secret_access_key = os.environ.get('aws_secret_access_key')
-            region = os.environ.get('aws_region')
+        # try:
+        sts_client = boto3.client('sts')
 
-            print(access_key_id)
-            
-            if not access_key_id or not secret_access_key or not region:
-                raise ValueError("One or more AWS credential secrets are missing from the environment.")
+        # Call the assume_role method of the STSConnection object and pass the role
+        # ARN and a role session name.
+        assumed_role_object=sts_client.assume_role(
+            RoleArn="arn:aws:iam::897729134151:role/github-actions",
+            RoleSessionName="AssumeRoleSession1"
+        )
 
-            # Create a Boto3 session using the retrieved credentials
-            session = boto3.Session(aws_access_key_id=access_key_id,aws_secret_access_key=secret_access_key)
-            print("Boto3 session configured successfully from GitHub secrets.")
-            return session
+        credentials=assumed_role_object['Credentials']
+        
+        access_key_id=credentials['AccessKeyId'],
+        secret_access_key=credentials['SecretAccessKey'],
+        session_token=credentials['SessionToken']
 
-        except Exception as e:
-            print(f"Error configuring Boto3 session with key and secret: {e}")
-            return None
+
+        print(access_key_id)
+        
+        if not access_key_id or not secret_access_key :
+            raise ValueError("One or more AWS credential secrets are missing from the environment.")
+
+        # Create a Boto3 session using the retrieved credentials
+        session = boto3.Session(aws_access_key_id=access_key_id,aws_secret_access_key=secret_access_key,aws_session_token = session_token)
+        print("Boto3 session configured successfully from GitHub secrets.")
+        return session
+
+        # except Exception as e:
+        #     print(f"Error configuring Boto3 session with key and secret: {e}")
+        #     return None
     else:
         try:
             # Create a Boto3 session using the retrieved credentials
