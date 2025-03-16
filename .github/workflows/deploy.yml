@@ -1,4 +1,4 @@
-name: build-and-register-container
+name: deploy-task-to-production
 
 on:
   workflow_dispatch:
