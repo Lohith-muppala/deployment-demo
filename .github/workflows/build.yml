@@ -113,7 +113,7 @@ jobs:
           TASK_ARN=$(aws ecs run-task \
             --cluster deployment-cluster \
             --task-definition deployment-task \
-            --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ARRAY}],securityGroups=[${{ steps.ecs_network_config.outputs.security_group_id }}],assignPublicIp=ENABLED}" \ 
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ARRAY}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=ENABLED}" \ 
             --query 'tasks[0].lastStatus' \
             --output text)
 
