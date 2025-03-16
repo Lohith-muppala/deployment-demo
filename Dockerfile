@@ -13,4 +13,4 @@ CMD ["python", "/src/train.py"]
 
 EXPOSE 80
 
-RUN if [ "$TRAINING" = "False" ]; then CMD python /src/predict.py; fi
+RUN if [ "$TRAINING" = "False" ]; then python /src/predict.py; fi
