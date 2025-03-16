@@ -37,13 +37,14 @@ def main():
         X =transform_features(data, mode='inference')
         # Make predictions
         predictions = dummy_model.predict(X)
+        print(predictions)
         save_predictions_to_s3(predictions=predictions,bucket_name='mlr-deployment-bucket',s3_key=f'predictions/{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.csv')
 
         return pd.Series(predictions)
 
-    except FileNotFoundError:
-        print(f"Error: Model file not found.")
-        return None
+    # except FileNotFoundError:
+    #     print(f"Error: Model file not found.")
+    #     return None
     except Exception as e:
         print(f"An error occurred during prediction: {e}")
         return None
