@@ -24,7 +24,7 @@ def save_predictions_to_s3(predictions, bucket_name, s3_key):
         csv_string = csv_buffer.getvalue()
 
         # Upload the CSV string to S3
-        boto3 = load_session(local=True)
+        boto3 = load_session(local=False)
         s3 = boto3.client('s3')
         s3.put_object(Body=csv_string, Bucket=bucket_name, Key=s3_key)
 
