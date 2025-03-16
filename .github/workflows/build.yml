@@ -114,7 +114,6 @@ jobs:
             --cluster deployment-cluster \
             --task-definition deployment-task \
             --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ARRAY}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=ENABLED}" \ 
-            --query 'tasks[0].lastStatus' \
             --output text)
 
           echo "ECS Task ARN: $TASK_ARN"
