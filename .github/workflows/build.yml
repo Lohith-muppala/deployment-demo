@@ -129,6 +129,7 @@ jobs:
           fi
         env:
           AWS_REGION: us-east-1 # Replace with your region
+        shell: /bin/bash
 
       # - name: Create ECS Service if it doesn't exist
       #   if = add : = steps.deploy-task.outcome == 'failure'
