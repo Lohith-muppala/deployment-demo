@@ -98,6 +98,27 @@ jobs:
           force-new-deployment: true
         continue-on-error: true
 
+      - name: Run ECS Task
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster deployment-cluster \
+            --task-definition ${{ steps.task-def.outputs.task-definition }} \
+            --output text)
+
+          echo "ECS Task ARN: $TASK_ARN"
+
+          aws ecs wait tasks-stopped --cluster deployment-cluster --tasks $TASK_ARN
+
+          TASK_STATUS=$(aws ecs describe-tasks --cluster deployment-cluster --tasks $TASK_ARN --query 'tasks[0].lastStatus' --output text)
+
+          echo "ECS Task Status: $TASK_STATUS"
+
+          if [ "$TASK_STATUS" != "STOPPED" ]; then
+            exit 1 # Fail the workflow if the task didn't stop successfully
+          fi
+        env:
+          AWS_REGION: us-east-1 # Replace with your region
+
       # - name: Create ECS Service if it doesn't exist
       #   if = add : = steps.deploy-task.outcome == 'failure'
       #   run: |
