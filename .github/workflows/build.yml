@@ -105,9 +105,9 @@ jobs:
             --task-definition deployment-task \
             --launch-type FARGATE \
             --output text \
-            --network-configuration "awsvpcConfiguration={subnets=[subnet-050c7a1e30ae0ba67],securityGroups=[sg-05ffdaea6df8038f0],assignPublicIp=DISABLED}" )
+            --network-configuration "awsvpcConfiguration={subnets=[subnet-050c7a1e30ae0ba67],securityGroups=[sg-05ffdaea6df8038f0],assignPublicIp=DISABLED}" | tr -d '\n')
 
-          echo "ECS Task ARN: $TASK_ARN"
+          echo "Debug: TASK_ARN=[$TASK_ARN]"
 
           aws ecs wait tasks-stopped --cluster deployment-cluster --tasks $TASK_ARN
 
