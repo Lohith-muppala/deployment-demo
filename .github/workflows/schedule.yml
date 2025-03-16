@@ -27,7 +27,7 @@ jobs:
       - name: Get Latest Task Definition ARN
         id: get-latest-task-def
         run: |
-          TASK_DEF_ARN=$(aws ecs describe-task-definition --task-definition prod-task-definition --query taskDefinition.taskDefinitionArn --output text)
+          TASK_DEF_ARN=$(aws ecs describe-task-definition --task-definition production-task --query taskDefinition.taskDefinitionArn --output text)
           echo "::set-output name=task_definition_arn::$TASK_DEF_ARN"
 
       - name: Deploy Amazon ECS task definition (Create if needed)
