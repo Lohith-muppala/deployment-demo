@@ -69,7 +69,11 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
           ECR_REPOSITORY: deployment
           IMAGE_TAG: ${{ steps.get-commit-branch.outputs.commit-branch }}-${{ steps.get-timestamp.outputs.timestamp }}
+          aws_secret_access_key : ${{ secrets.SECRET_KEY_SECRET_NAME }}
+          aws_access_key_id : ${{ secrets.ACCESS_KEY_SECRET_NAME }}
+          
         run: |
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
           docker build --build-arg TRAINING=True -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -89,21 +93,46 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: deployment-service
           cluster: deployment-cluster
           wait-for-service-stability: true
         continue-on-error: true
 
-      - name: Create ECS Service if it doesn't exist
-        if: steps.deploy-task.outcome == 'failure'
+      - name: Run ECS Task
         run: |
-          aws ecs create-service \
+          TASK_ARN=$(aws ecs run-task \
             --cluster deployment-cluster \
-            --service-name deployment-service \
-            --task-definition src/deployment/task-definition.json \
-            --desired-count 1 \
+            --task-definition deployment-task \
             --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=['subnet-YOUR_SUBNET_ID'],securityGroups=['sg-YOUR_SECURITY_GROUP_ID'],assignPublicIp=ENABLED}" \
-            --platform-version LATEST
+            --query "tasks[0].taskArn" \
+            --output text \
+            --network-configuration "awsvpcConfiguration={subnets=[subnet-050c7a1e30ae0ba67,subnet-08587efdb6f603316,subnet-07085150e64d7ec70,subnet-02e3b5058d5807378,subnet-0549c111da38470b3,subnet-0fb8e6943c9a576b0],securityGroups=[sg-05ffdaea6df8038f0],assignPublicIp=ENABLED}" | tr -d '\n')
+
+          echo "Debug: TASK_ARN=[$TASK_ARN]"
+
+          aws ecs wait tasks-stopped --cluster deployment-cluster --tasks $TASK_ARN
+
+          TASK_STATUS=$(aws ecs describe-tasks --cluster deployment-cluster --tasks $TASK_ARN --query 'tasks[0].lastStatus' --output text)
+
+          echo "ECS Task Status: $TASK_STATUS"
+
+          if [ "$TASK_STATUS" != "STOPPED" ]; then
+            exit 1 # Fail the workflow if the task didn't stop successfully
+          fi
+        shell: bash
         env:
-          AWS_REGION: us-east-1
+          AWS_REGION: us-east-1 # Replace with your region
+        
+
+      # - name: Create ECS Service if it doesn't exist
+      #   if = add : = steps.deploy-task.outcome == 'failure'
+      #   run: |
+      #     aws ecs create-service \
+      #       --cluster deployment-cluster \
+      #       --service-name deployment-service \
+      #       --task-definition src/deployment/task-definition.json \
+      #       --desired-count 1 \
+      #       --launch-type FARGATE \
+      #       --network-configuration "awsvpcConfiguration={subnets=['subnet-YOUR_SUBNET_ID'],securityGroups=['sg-YOUR_SECURITY_GROUP_ID'],assignPublicIp=ENABLED}" \
+      #       --platform-version LATEST
+      #   env:
+      #     AWS_REGION: us-east-1
