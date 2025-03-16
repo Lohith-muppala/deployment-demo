@@ -1,6 +1,7 @@
 import sys,os
 sys.path.append(os.path.abspath("src"))
 sys.path.append(os.path.abspath("."))
+sys.path.append(os.path.abspath("data"))
 
 from src.modeling.LinearRegressor import LR_Model
 from src.utils.get_creds import load_session
