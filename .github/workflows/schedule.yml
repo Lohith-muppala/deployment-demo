@@ -1,5 +1,4 @@
-name: build-and-register-container
-
+name: scheduled-trigger
 on:
   workflow_dispatch:
   schedule:
@@ -29,7 +28,7 @@ jobs:
       - name: Get image from task definition
         id: get-image-from-task-def
         run: |
-          IMAGE=$(aws ecs describe-task-definition --task-definition prod-task-definition --query "taskDefinition.containerDefinitions[?name=='production-container'].image" --output text | tr -d '"')
+          IMAGE=$(aws ecs describe-task-definition --task-definition production-task --query "taskDefinition.containerDefinitions[?name=='production-container'].image" --output text | tr -d '"')
           echo "::set-output name=image::$IMAGE"
 
       - name: Render task definition
