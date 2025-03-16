@@ -102,7 +102,8 @@ jobs:
         run: |
           TASK_ARN=$(aws ecs run-task \
             --cluster deployment-cluster \
-            --task-definition deployment-task \
+            --cli-input-json ${{ steps.task-def.outputs.task-definition }} \
+            --query 'tasks[0].lastStatus' \
             --output text)
 
           echo "ECS Task ARN: $TASK_ARN"
