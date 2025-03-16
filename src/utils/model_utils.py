@@ -52,7 +52,6 @@ def get_latest_object_from_s3(session, bucket_name, s3_prefix):
 
     objects = list(s3.Bucket(bucket_name).objects.filter(Prefix=s3_prefix))
     objects.sort(key=lambda o: o.last_modified)
-    print(objects)
 
     if not objects:
         return None
@@ -85,18 +84,18 @@ def load_model_from_s3(session, bucket_name, s3_key):
         object: The loaded machine learning model, or None if an error occurs.
     """
     obj = None
-    try:
-        s3 = session.client('s3')
 
-        obj_name = get_latest_object_from_s3(session=session,bucket_name=bucket_name, s3_prefix=s3_key)
-        assert obj_name != None
-        obj = s3.get_object(Bucket=bucket_name, Key=f'{obj_name}')
-        model_bytes = obj['Body'].read()
-        model = joblib.load(io.BytesIO(model_bytes))
-        print(f"Model loaded from s3://{bucket_name}/{obj_name}")
-        return model
+    s3 = session.client('s3')
+    obj_name = get_latest_object_from_s3(session=session,bucket_name=bucket_name, s3_prefix=s3_key)
+    print('obj',obj_name)
+    assert obj_name != None
+    obj = s3.get_object(Bucket=bucket_name, Key=f'{obj_name}')
+    model_bytes = obj['Body'].read()
+    model = joblib.load(io.BytesIO(model_bytes))
+    print(f"Model loaded from s3://{bucket_name}/{obj_name}")
+    return model
 
-    except Exception as e:
-        print(f"Error loading model from S3: {e}")
-        return None
+    # except Exception as e:
+    #     print(f"Error loading model from S3: {e}")
+    #     return None
 
