@@ -53,8 +53,20 @@ def get_latest_object_from_s3(session, bucket_name, s3_prefix):
         objects = list(s3.Bucket(bucket_name).objects.filter(Prefix=s3_prefix))
         objects.sort(key=lambda o: o.last_modified)
         print(objects)
-        return objects[-1].key
 
+        if not objects:
+            return None
+
+        latest_object = objects[-1]
+
+        if isinstance(latest_object, boto3.resources.factory.s3.ObjectSummary):
+            return latest_object
+        else:
+            print("Warning: Latest object is not an ObjectSummary.")
+            return None
+
+    except IndexError: # Handle empty object lists
+        return None
     except Exception as e:
         print(f"Error retrieving latest object: {e}")
         return None
