@@ -1,0 +1,39 @@
+name: build-and-register-container
+
+on:
+  workflow_dispatch:
+  
+  push:
+    branches: [ main ]
+
+jobs:
+  run:
+    name: Deploy container to ECS
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checking out repository
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_FOR_GITHUB }}
+          role-session-name: GitHubActions
+      
+      - name: Deploy Amazon ECS task definition (Create if needed)
+        id: deploy-task
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: src/deployment/prod-task-definition.json
+          cluster: production-cluster
+          run-task: true
+          run-task-security-groups: sg-05ffdaea6df8038f0
+          run-task-subnets: subnet-050c7a1e30ae0ba67,subnet-08587efdb6f603316,subnet-07085150e64d7ec70,subnet-02e3b5058d5807378,subnet-0549c111da38470b3,subnet-0fb8e6943c9a576b0
+          run-task-assign-public-IP: ENABLED
+          wait-for-task-stopped: true
+        continue-on-error: false
