@@ -1,9 +1,11 @@
-name: scheduled-trigger
+name: build-and-register-container
 
 on:
   workflow_dispatch:
   schedule:
     - cron: '0 0 3 * *' # Runs at 00:00 UTC on the 3rd of every month
+  push:
+    branches: [ main ]
 
 jobs:
   run:
@@ -24,17 +26,25 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_FOR_GITHUB }}
           role-session-name: GitHubActions
 
-      - name: Get Latest Task Definition ARN
-        id: get-latest-task-def
+      - name: Get image from task definition
+        id: get-image-from-task-def
         run: |
-          TASK_DEF_ARN=$(aws ecs describe-task-definition --task-definition production-task --query taskDefinition.taskDefinitionArn --output text)
-          echo "::set-output name=task_definition_arn::$TASK_DEF_ARN"
+          IMAGE=$(aws ecs describe-task-definition --task-definition prod-task-definition --query "taskDefinition.containerDefinitions[?name=='production-container'].image" --output text | tr -d '"')
+          echo "::set-output name=image::$IMAGE"
 
-      - name: Deploy Amazon ECS task definition (Create if needed)
+      - name: Render task definition
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: src/deployment/prod-task-definition.json
+          container-name: production-container
+          image: ${{ steps.get-image-from-task-def.outputs.image }}
+
+      - name: Deploy Amazon ECS task definition
         id: deploy-task
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.get-latest-task-def.outputs.task_definition_arn }}
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
           cluster: production-cluster
           run-task: true
           run-task-security-groups: sg-05ffdaea6df8038f0
