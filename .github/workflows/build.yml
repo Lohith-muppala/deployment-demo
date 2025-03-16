@@ -113,8 +113,7 @@ jobs:
           TASK_ARN=$(aws ecs run-task \
             --cluster deployment-cluster \
             --task-definition deployment-task \
-            --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ARRAY}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=ENABLED}" \ 
-            --output text)
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ARRAY}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=ENABLED}" )
 
           echo "ECS Task ARN: $TASK_ARN"
 
