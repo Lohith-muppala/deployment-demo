@@ -1,5 +1,5 @@
 {
-    "family": "deployment-task",
+    "family": "production-task",
     "networkMode": "awsvpc",
     "requiresCompatibilities": [
       "FARGATE"
