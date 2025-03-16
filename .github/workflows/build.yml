@@ -1,4 +1,4 @@
-name: build-and-register-container
+name: CI - build-and-register-container
 
 on:
   workflow_dispatch:

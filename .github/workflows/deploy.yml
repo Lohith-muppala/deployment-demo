@@ -1,4 +1,4 @@
-name: deploy-task-to-production
+name: CD - deploy-task-to-production
 
 on:
   workflow_dispatch:
