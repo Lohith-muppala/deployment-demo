@@ -102,7 +102,7 @@ jobs:
         run: |
           TASK_ARN=$(aws ecs run-task \
             --cluster deployment-cluster \
-            --task-definition ${{ steps.task-def.outputs.task-definition }} \
+            --task-definition deployment-task \
             --output text)
 
           echo "ECS Task ARN: $TASK_ARN"
