@@ -33,10 +33,9 @@ def load_session(profile_name="default",local=False):
 
         credentials=assumed_role_object['Credentials']
         
-        access_key_id=credentials['AccessKeyId'],
-        secret_access_key=credentials['SecretAccessKey'],
+        access_key_id=credentials['AccessKeyId']
+        secret_access_key=credentials['SecretAccessKey']
         session_token=credentials['SessionToken']
-
 
         print(access_key_id)
         
