@@ -2,7 +2,8 @@ name: build-and-register-container
 
 on:
   workflow_dispatch:
-  
+  schedule:
+    - cron: '0 0 3 * *' # Runs at 00:00 UTC on the 3rd of every month
   push:
     branches: [ main ]
 
@@ -24,12 +25,18 @@ jobs:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.AWS_ROLE_FOR_GITHUB }}
           role-session-name: GitHubActions
-      
+
+      - name: Get Latest Task Definition ARN
+        id: get-latest-task-def
+        run: |
+          TASK_DEF_ARN=$(aws ecs describe-task-definition --task-definition prod-task-definition --query taskDefinition.taskDefinitionArn --output text)
+          echo "::set-output name=task_definition_arn::$TASK_DEF_ARN"
+
       - name: Deploy Amazon ECS task definition (Create if needed)
         id: deploy-task
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: src/deployment/prod-task-definition.json
+          task-definition: ${{ steps.get-latest-task-def.outputs.task_definition_arn }}
           cluster: production-cluster
           run-task: true
           run-task-security-groups: sg-05ffdaea6df8038f0
