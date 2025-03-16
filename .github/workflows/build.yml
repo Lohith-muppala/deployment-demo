@@ -97,6 +97,7 @@ jobs:
           run-task: true
           run-task-security-groups: sg-05ffdaea6df8038f0
           run-task-subnets: subnet-050c7a1e30ae0ba67,subnet-08587efdb6f603316,subnet-07085150e64d7ec70,subnet-02e3b5058d5807378,subnet-0549c111da38470b3,subnet-0fb8e6943c9a576b0
+          run-task-assign-public-IP: ENABLED
           wait-for-task-stopped: true
         continue-on-error: false
 
