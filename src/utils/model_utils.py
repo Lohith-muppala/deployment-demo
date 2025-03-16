@@ -18,9 +18,9 @@ def save_model_to_s3(model, bucket_name, s3_key,boto_session,temp_file_path="tem
     try:
         # Save the model to a temporary local file
         joblib.dump(model, temp_file_path)
-
+        
         # Upload the file to S3
-        s3 = boto_session.client('s3')
+        s3 = boto3.client('s3')
         s3.upload_file(temp_file_path, bucket_name, s3_key)
 
         print(f"Model saved to s3://{bucket_name}/{s3_key}")
@@ -45,30 +45,21 @@ def get_latest_object_from_s3(session, bucket_name, s3_prefix):
         s3_prefix (str): The S3 prefix (directory-like path).
 
     Returns:
-        dict: The S3 object metadata (including 'Key') of the latest object, or None if no objects are found.
+        str: The S3 object key of the latest object, or None if no objects are found.
     """
-    # try:
-    s3 = session.resource('s3')
+    try:
+        s3 = session.resource('s3')
 
-    objects = list(s3.Bucket(bucket_name).objects.filter(Prefix=s3_prefix))
-    objects.sort(key=lambda o: o.last_modified)
+        objects = list(s3.Bucket(bucket_name).objects.filter(Prefix=s3_prefix))
+        if not objects:
+            return None
 
-    if not objects:
+        objects.sort(key=lambda o: o.last_modified)
+        return objects[-1].key
+
+    except Exception as e:
+        print(f"Error retrieving latest object: {e}")
         return None
-
-    latest_object = objects[-1]
-
-    if isinstance(latest_object, boto3.resources.factory.s3.ObjectSummary):
-        return latest_object
-    else:
-        print("Warning: Latest object is not an ObjectSummary.")
-        return None
-
-    # except IndexError: # Handle empty object lists
-    #     return None
-    # except Exception as e:
-    #     print(f"Error retrieving latest object: {e}")
-    #     return None
 
 
 def load_model_from_s3(session, bucket_name, s3_key):
@@ -83,19 +74,21 @@ def load_model_from_s3(session, bucket_name, s3_key):
     Returns:
         object: The loaded machine learning model, or None if an error occurs.
     """
-    obj = None
+    try:
+        s3 = session.client('s3')  # Use session.client instead of boto3.client
 
-    s3 = session.client('s3')
-    obj_name = get_latest_object_from_s3(session=session,bucket_name=bucket_name, s3_prefix=s3_key)
-    print('obj',obj_name)
-    assert obj_name != None
-    obj = s3.get_object(Bucket=bucket_name, Key=f'{obj_name}')
-    model_bytes = obj['Body'].read()
-    model = joblib.load(io.BytesIO(model_bytes))
-    print(f"Model loaded from s3://{bucket_name}/{obj_name}")
-    return model
+        obj_name = get_latest_object_from_s3(session=session, bucket_name=bucket_name, s3_prefix=s3_key)
+        if obj_name is None:
+            print("Error: Model file not found.")
+            return None
 
-    # except Exception as e:
-    #     print(f"Error loading model from S3: {e}")
-    #     return None
+        obj = s3.get_object(Bucket=bucket_name, Key=obj_name)
+        model_bytes = obj['Body'].read()
+        model = joblib.load(io.BytesIO(model_bytes))
+        print(f"Model loaded from s3://{bucket_name}/{obj_name}")
+        return model
+
+    except Exception as e:
+        print(f"Error loading model from S3: {e}")
+        return None
 
