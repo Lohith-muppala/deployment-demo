@@ -47,29 +47,29 @@ def get_latest_object_from_s3(session, bucket_name, s3_prefix):
     Returns:
         dict: The S3 object metadata (including 'Key') of the latest object, or None if no objects are found.
     """
-    try:
-        s3 = session.resource('s3')
+    # try:
+    s3 = session.resource('s3')
 
-        objects = list(s3.Bucket(bucket_name).objects.filter(Prefix=s3_prefix))
-        objects.sort(key=lambda o: o.last_modified)
-        print(objects)
+    objects = list(s3.Bucket(bucket_name).objects.filter(Prefix=s3_prefix))
+    objects.sort(key=lambda o: o.last_modified)
+    print(objects)
 
-        if not objects:
-            return None
-
-        latest_object = objects[-1]
-
-        if isinstance(latest_object, boto3.resources.factory.s3.ObjectSummary):
-            return latest_object
-        else:
-            print("Warning: Latest object is not an ObjectSummary.")
-            return None
-
-    except IndexError: # Handle empty object lists
+    if not objects:
         return None
-    except Exception as e:
-        print(f"Error retrieving latest object: {e}")
+
+    latest_object = objects[-1]
+
+    if isinstance(latest_object, boto3.resources.factory.s3.ObjectSummary):
+        return latest_object
+    else:
+        print("Warning: Latest object is not an ObjectSummary.")
         return None
+
+    # except IndexError: # Handle empty object lists
+    #     return None
+    # except Exception as e:
+    #     print(f"Error retrieving latest object: {e}")
+    #     return None
 
 
 def load_model_from_s3(session, bucket_name, s3_key):
