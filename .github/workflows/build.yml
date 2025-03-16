@@ -95,7 +95,8 @@ jobs:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           cluster: deployment-cluster
           run-task: true
-        continue-on-error: true
+          wait-for-task-stopped: true
+        continue-on-error: false
 
       # - name: Run ECS Task
       #   run: |
