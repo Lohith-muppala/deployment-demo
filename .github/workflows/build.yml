@@ -93,9 +93,9 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: deployment-service
           cluster: deployment-cluster
           wait-for-service-stability: true
+          run-task: true
         continue-on-error: true
 
       - name: Create ECS Service if it doesn't exist
