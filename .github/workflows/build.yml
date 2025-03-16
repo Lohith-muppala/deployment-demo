@@ -98,16 +98,14 @@ jobs:
           force-new-deployment: true
         continue-on-error: true
 
-      
+
       - name: Get ECS Cluster Network Configuration
         id: ecs_network_config
         run: |
-          CLUSTER_ARN=$(aws ecs describe-clusters --clusters deployment-cluster --query clusters[0].clusterArn --output text)
-          SUBNETS=$(aws ecs describe-clusters --clusters $CLUSTER_ARN --query clusters[0].settings[?name=='containerInsights'].value --output text)
-          SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$(aws ecs describe-clusters --clusters $CLUSTER_ARN --query clusters[0].settings[?name=='containerInsights'].value --output text)" --query "Subnets[0].SubnetId" --output text)
-          SECURITY_GROUP_ID=$(aws ecs describe-clusters --clusters $CLUSTER_ARN --query clusters[0].attachments[0].details[?name=='securityGroups'][0].value --output text)
-
-          echo "::set-output name=subnet_id::$SUBNET_ID"
+          SUBNET_IDS=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=vpc-0a0682b751cd6b2f7" --query "Subnets[*].SubnetId" --output text)
+          SECURITY_GROUP_ID=$(aws ecs describe-clusters --clusters deployment-cluster --query clusters[0].attachments[0].details[?name=='securityGroups'][0].value --output text)
+      
+          echo "::set-output name=subnet_ids::$SUBNET_IDS"
           echo "::set-output name=security_group_id::$SECURITY_GROUP_ID"
 
       - name: Run ECS Task
@@ -115,7 +113,7 @@ jobs:
           TASK_ARN=$(aws ecs run-task \
             --cluster deployment-cluster \
             --task-definition deployment-task \
-            --network-configuration "awsvpcConfiguration={subnets=[${{ steps.ecs_network_config.outputs.subnet_id }}],securityGroups=[${{ steps.ecs_network_config.outputs.security_group_id }}],assignPublicIp=ENABLED}" \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ARRAY}],securityGroups=[${{ steps.ecs_network_config.outputs.security_group_id }}],assignPublicIp=ENABLED}" \ 
             --query 'tasks[0].lastStatus' \
             --output text)
 
