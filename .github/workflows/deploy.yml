@@ -48,7 +48,7 @@ jobs:
       
       - name: Login to Amazon ECR
         id: login-aws-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Get commit branch
         id: get-commit-branch
@@ -81,7 +81,7 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: src/deployment/task-definition.json
+          task-definition: src/deployment/prod-task-definition.json
           container-name: production-container
           image: ${{ steps.build-image.outputs.image }}
 
