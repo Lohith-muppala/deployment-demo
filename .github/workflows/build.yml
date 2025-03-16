@@ -103,6 +103,7 @@ jobs:
           TASK_ARN=$(aws ecs run-task \
             --cluster deployment-cluster \
             --task-definition deployment-task \
+            --launch-type FARGATE \
             --output text \
             --network-configuration "awsvpcConfiguration={subnets=[subnet-050c7a1e30ae0ba67],securityGroups=[sg-05ffdaea6df8038f0],assignPublicIp=DISABLED}" )
 
