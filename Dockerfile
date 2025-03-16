@@ -1,6 +1,7 @@
 FROM python:3.9-slim
 
 ARG TRAINING=True
+ENV TRAINING=$TRAINING
 
 COPY . .
 
