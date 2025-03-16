@@ -95,19 +95,19 @@ jobs:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           cluster: deployment-cluster
           wait-for-service-stability: true
-          run-task: true
+          force-new-deployment: true
         continue-on-error: true
 
-      - name: Create ECS Service if it doesn't exist
-        if: steps.deploy-task.outcome == 'failure'
-        run: |
-          aws ecs create-service \
-            --cluster deployment-cluster \
-            --service-name deployment-service \
-            --task-definition src/deployment/task-definition.json \
-            --desired-count 1 \
-            --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=['subnet-YOUR_SUBNET_ID'],securityGroups=['sg-YOUR_SECURITY_GROUP_ID'],assignPublicIp=ENABLED}" \
-            --platform-version LATEST
-        env:
-          AWS_REGION: us-east-1
+      # - name: Create ECS Service if it doesn't exist
+      #   if = add : = steps.deploy-task.outcome == 'failure'
+      #   run: |
+      #     aws ecs create-service \
+      #       --cluster deployment-cluster \
+      #       --service-name deployment-service \
+      #       --task-definition src/deployment/task-definition.json \
+      #       --desired-count 1 \
+      #       --launch-type FARGATE \
+      #       --network-configuration "awsvpcConfiguration={subnets=['subnet-YOUR_SUBNET_ID'],securityGroups=['sg-YOUR_SECURITY_GROUP_ID'],assignPublicIp=ENABLED}" \
+      #       --platform-version LATEST
+      #   env:
+      #     AWS_REGION: us-east-1
