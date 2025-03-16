@@ -127,9 +127,10 @@ jobs:
           if [ "$TASK_STATUS" != "STOPPED" ]; then
             exit 1 # Fail the workflow if the task didn't stop successfully
           fi
+        shell: bash
         env:
           AWS_REGION: us-east-1 # Replace with your region
-        shell: /bin/bash
+        
 
       # - name: Create ECS Service if it doesn't exist
       #   if = add : = steps.deploy-task.outcome == 'failure'
