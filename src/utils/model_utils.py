@@ -52,7 +52,7 @@ def get_latest_object_from_s3(session, bucket_name, s3_prefix):
 
         objects = list(s3.Bucket(bucket_name).objects.filter(Prefix=s3_prefix))
         objects.sort(key=lambda o: o.last_modified)
-        print(objects[-1].key)
+        print(objects)
         return objects[-1].key
 
     except Exception as e:
