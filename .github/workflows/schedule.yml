@@ -1,4 +1,4 @@
-name: build-and-register-container
+name: scheduled-trigger
 
 on:
   workflow_dispatch:
